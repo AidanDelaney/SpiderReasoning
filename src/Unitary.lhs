@@ -4,7 +4,7 @@
 
 -*- mode: haskell; c-basic-offset: 2; tab-width: 2; indent-tabs-mode: nil -*-
 
-> module Unitary (Contour, ContourSet, Zone (..), ZoneSet, Foot (..), FootSet, Spider (..), SI (..), SISet, AlphaSI (..), toSSet, toSISet, Unitary, Alpha, mkUnitary, mkAlpha, U (..), unitaryToAlpha, UnitaryAndZone2 (..), powersetS, listAllZones, UnitaryAndElem (..), UnitaryAndElem2 (..), allContours, allContoursS) where
+> module Unitary (Contour, ContourSet, Zone (zin, zout), mkZone, ZoneSet, Foot (..), FootSet, Spider (..), SI (..), SISet, AlphaSI (..), toSSet, toSISet, Unitary, Alpha, mkUnitary, mkAlpha, U (..), unitaryToAlpha, UnitaryAndZone2 (..), powersetS, listAllZones, UnitaryAndElem (..), UnitaryAndElem2 (..), allContours, allContoursS) where
 
 >import qualified Data.Set as Set
 >import Data.Set (Set)
@@ -32,6 +32,10 @@ First, define an appropriate data structure for a spider diagram of order.  This
 
 >data Zone = Zone { zin :: ContourSet
 >                 , zout:: ContourSet} deriving (Show, Eq, Ord)
+
+>mkZone :: ContourSet -> ContourSet -> Zone
+>mkZone ins outs | (Set.intersection ins outs) == Set.empty = Zone ins outs
+>mkZone _ _ = error "Incorrect Zone specification"
 
 >type ZoneSet = Set Zone
 
@@ -124,7 +128,7 @@ Furthermore, we define a method for constructing a unitary $\alpha$ diagram from
 
 >-- | Given $C(d)$ and a set of contours, construct the corresponding Zone
 >listAllZones :: ContourSet -> ContourSet -> Zone
->listAllZones cs inZones = Zone inZones (cs `Set.difference` inZones)
+>listAllZones cs inZones = mkZone inZones (cs `Set.difference` inZones)
 
 >powerset :: [a] -> [[a]]
 >powerset [] = [[]]
@@ -188,7 +192,7 @@ Temporary data type for testing \textit{introduction of a missing zone}.
 >          else 
 >            arbitraryZone mzs
 >    z2 <- if (Set.null mzs) then
->            return (Zone Set.empty cs)
+>            return (mkZone Set.empty cs)
 >          else 
 >            arbitraryZone mzs
 >    return (UnitaryAndZone2 d z1 z2)

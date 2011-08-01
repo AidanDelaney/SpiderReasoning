@@ -33,7 +33,7 @@ Splits a Zone in two by introducing a new Contour label.
 Splits each Zone in a ZoneSet in two.
 
 >splitZoneset :: Contour -> ZoneSet -> ZoneSet
->splitZoneset l zs | Set.null zs = splitZone l (Zone Set.empty Set.empty)
+>splitZoneset l zs | Set.null zs = splitZone l (mkZone Set.empty Set.empty)
 >                  | otherwise   = flattenSet (Set.map (splitZone l) zs)
 
 If the habitat of a spider foot is expanded by introducing a contour label, then add the new zones to the spider habitat.
@@ -66,7 +66,8 @@ The function \texttt{ruleIntroC} is an implementation of rule~\ref{rule:intro-co
 >                 (\(Leaf d) -> (allContoursS /= (contours d))) f c
 >  where
 >  f (Leaf d) = Leaf (ruleIntroC 
->                 (head (Set.toList (allContoursS `Set.difference` (contours d)))) 
+>                 (head (Set.toList (allContoursS 
+>                                       `Set.difference` (contours d)))) 
 >                 d)
 
 Rule~\ref{rule:introduce-missing-zone} \textit{Introduction of a Missing Zone} is implemented in \texttt{rule\_intro\_mz}.  We assume the existence of a function \texttt{powersetS :: Ord a => Set a -> Set (Set a)} which computes the powerset of a \texttt{Set a}.  The full implementation of all helper functions can be found in appendix~\ref{appendix:code}.
@@ -140,7 +141,8 @@ Again, we provide a generalisation of the split spiders rule, called \texttt{spl
 
 >splitSpiders :: Compound -> Compound
 >splitSpiders d = 
->  applyToLeafIf (\(Leaf d') -> not (isNothing (findSplitableSpider (sids d'))))
+>  applyToLeafIf (\(Leaf d') -> not (isNothing 
+>                                       (findSplitableSpider (sids d'))))
 >                (\(Leaf d') -> 
 >                    let (Just p') = findSplitableSpider (sids d') in 
 >                    ruleSplitSpiders p' d')
@@ -153,8 +155,8 @@ The implementation of rule~\ref{rule:conjoin-stuff} \textit{Separate Order and B
 >extractOrderedAlphaSpiders sis = 
 >  Set.filter (not . isNothing . rank . alphaFoot) sis
 
->-- | Remove integer ranks from all spiders, making sure to correctly update
->-- spider identifiers
+>-- | Remove integer ranks from all spiders, making sure to 
+>-- correctly update spider identifiers
 >unorderAllSpiders :: Set AlphaSI -> Set AlphaSI
 >unorderAllSpiders sis = 
 >  Set.map (\s-> AlphaSI 
@@ -183,8 +185,14 @@ The following function separates order information from bounds information when 
 >  then Leaf d
 >  else And (Leaf d1) (Leaf d2)
 >    where
->    d1 = mkAlpha (contours d) (zones d) Set.empty (extractOrderedAlphaSpiders (sids d))
->    d2 = mkAlpha (contours d) (zones d) (shaded d) (unorderAllSpiders (sids d))
+>    d1 = mkAlpha (contours d) 
+>                 (zones d) 
+>                 Set.empty 
+>                 (extractOrderedAlphaSpiders (sids d))
+>    d2 = mkAlpha (contours d) 
+>                 (zones d) 
+>                 (shaded d) 
+>                 (unorderAllSpiders (sids d))
 
 We now present a recursive algorithm to apply \texttt{separate\_order\_and\_bounds} to a \texttt{Compound} diagram.
 
@@ -392,8 +400,8 @@ The implementation of rule~\ref{rule:drop-spider-foot-order} \textit{drop spider
 >genDiagram :: Compound
 >genDiagram = Leaf (mkUnitary (Set.fromList "PQRWX") (Set.fromList [p, notp]) Set.empty (Set.fromList [s1, s2]))
 >     where
->          p = (Zone {zin = Set.fromList "P", zout = Set.fromList ""})
->          notp = (Zone {zin = Set.fromList "", zout = Set.fromList "P"})
+>          p = mkZone (Set.fromList "P") (Set.fromList "")
+>          notp = mkZone (Set.fromList "") (Set.fromList "P")
 >          h = Set.fromList [Foot (Just 1) p, Foot Nothing notp, Foot Nothing p, Foot (Just 2) notp]
 >          s1 = SI 2 h
 >          s2 = SI 1 (Set.fromList [Foot (Just 2) p])
@@ -403,7 +411,7 @@ The implementation of rule~\ref{rule:drop-spider-foot-order} \textit{drop spider
 Our top-level driver code is now straightforward.  We assume the existence of functions \texttt{genDiagram :: Compound} and \texttt{allContours :: [Contour]} where \texttt{genDiagram} returns an arbitrary \texttt{Compound} diagram and \texttt{allContours} is the implementation of $\mathcal{C}$.  The variable names in the code are in one-to-one correspondence with the algorithm steps presented in figure~\ref{fig:diagram-normalisation-process}, for example, \texttt{dAlpha} corresponds to $D_{\alpha}$.
 
 >main :: IO()
->main = do 
+>main = do  defaultMain tests
 >           print dBullet
 >     where
 >     dC = introC allContours genDiagram
