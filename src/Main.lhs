@@ -9,7 +9,7 @@
 
 >import qualified Data.Set as Set
 >import Data.Set (Set, fromList)
->import Data.Maybe (isNothing, fromMaybe)
+>import Data.Maybe (isJust, fromMaybe)
 
 >import Test.QuickCheck
 >import Test.Framework (defaultMain, testGroup)
@@ -153,7 +153,7 @@ The implementation of rule~\ref{rule:conjoin-stuff} \textit{Separate Order and B
 >-- | Get the subset of @\alpha@-spiders that are ordered.
 >extractOrderedAlphaSpiders :: Set AlphaSI -> Set AlphaSI
 >extractOrderedAlphaSpiders sis = 
->  Set.filter (not . isNothing . rank . alphaFoot) sis
+>  Set.filter (isJust . rank . alphaFoot) sis
 
 >-- | Remove integer ranks from all spiders, making sure to 
 >-- correctly update spider identifiers
