@@ -117,7 +117,7 @@ In order to implement rule~\ref{rule:split-spiders} we require an implementation
 >             n = case (Set.minView (find p (sids d))) of
 >                Nothing -> 1
 >                Just (e, s) -> (count e) + 1
->             sis = toSISet (ss `Set.union` (Set.fromList [(Spider n p)]))
+>             sis = toSISet (ss `Set.union` (Set.singleton (Spider n p)))
 
 >ruleSplitSpiders :: FootSet -> Unitary -> Compound
 >ruleSplitSpiders p d = Or 
@@ -141,8 +141,8 @@ Again, we provide a generalisation of the split spiders rule, called \texttt{spl
 
 >splitSpiders :: Compound -> Compound
 >splitSpiders d = 
->  applyToLeafIf (\(Leaf d') -> not (isNothing 
->                                       (findSplitableSpider (sids d'))))
+>  applyToLeafIf (\(Leaf d') -> 
+>                    isJust (findSplitableSpider (sids d')))
 >                (\(Leaf d') -> 
 >                    let (Just p') = findSplitableSpider (sids d') in 
 >                    ruleSplitSpiders p' d')
@@ -238,7 +238,7 @@ The implementation of \texttt{factor\_lowest\_spider} recursively applies \\\tex
 
 >factorLowestSpider :: AlphaCompound -> AlphaCompound
 >factorLowestSpider d = 
->  applyToLeafIf (\(Leaf d') -> not $ isNothing $ findLowestFactorable (sids d'))
+>  applyToLeafIf (\(Leaf d') -> isJust $ findLowestFactorable (sids d'))
 >                (\(Leaf d') -> ruleFactorLowestSpider d')
 >                d
 
