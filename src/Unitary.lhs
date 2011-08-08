@@ -39,7 +39,7 @@ First, define an appropriate data structure for a spider diagram of order.  This
 
 >type ZoneSet = Set Zone
 
-From definition~\ref{defn:sdoo-foot}, a spider foot is an element of the set $(\Zed^+\cup\{\bullet\})\times\mathcal{Z}$.  We use Nothing as $\bullet$ and Just i as rank i.
+From definition~\ref{defn:sdoo-foot}, a spider foot is an element of the set $(\Zed^+\cup\{\bullet\})\times\mathcal{Z}$.  We use \texttt{Nothing} as $\bullet$ and \texttt{Just i} as rank i.  By deriving the type class \texttt{Ord} it is the case that \texttt{Nothing}$<$\texttt{Just x} for all integers $x$.  The \texttt{Ord} typeclass does not encode the $<$ relation over feet as defined in definition~\ref{defn:sdoo-foot}.
 
 >data Foot = Foot { rank   :: Maybe Int
 >                 , habitat:: Zone} deriving (Show, Eq, Ord)

@@ -70,7 +70,7 @@ The function \texttt{ruleIntroC} is an implementation of rule~\ref{rule:intro-co
 >                                       `Set.difference` (contours d)))) 
 >                 d)
 
-Rule~\ref{rule:introduce-missing-zone} \textit{Introduction of a Missing Zone} is implemented in \texttt{rule\_intro\_mz}.  We assume the existence of a function \texttt{powersetS :: Ord a => Set a -> Set (Set a)} which computes the powerset of a \texttt{Set a}.  The full implementation of all helper functions can be found in appendix~\ref{appendix:code}.
+Rule~\ref{rule:introduce-missing-zone} \textit{Introduction of a Missing Zone} is implemented in \texttt{ruleIntroMz}.  We assume the existence of a function \texttt{powersetS :: Ord a => Set a -> Set (Set a)} which computes the powerset of a \texttt{Set a}.  The full implementation of all helper functions can be found in appendix~\ref{appendix:code}.
 
 >ruleIntroMz :: Zone -> Unitary -> Unitary
 >ruleIntroMz z d = 
@@ -79,7 +79,7 @@ Rule~\ref{rule:introduce-missing-zone} \textit{Introduction of a Missing Zone} i
 >            (Set.insert z (shaded d))
 >            (sids d)
 
-We provide an implementation of \texttt{intro\_mz} which simply applies \texttt{rule\_intro\_mz} for each element in the set of all zones.
+We provide an implementation of \texttt{introMz} which simply applies \texttt{ruleIntroMz} for each element in the set of all zones.
 
 >introMz :: Compound -> Compound
 >introMz c = fmap (\d' -> Set.fold ruleIntroMz d' (allZones d')) c
@@ -87,7 +87,7 @@ We provide an implementation of \texttt{intro\_mz} which simply applies \texttt{
 >  allZones d' = (Set.map (listAllZones (contours d')) 
 >                            $ powersetS (contours d'))
 
-In order to implement rule~\ref{rule:split-spiders} we require an implementation of the $\oplus$ and $\ominus$ operators.  These are implemented in the functions \texttt{add\_a\_spider} and \texttt{remove\_a\_spider} respectively.  In this implementation the rule we choose a specific bipartite partition of the \texttt{FootSet}.  We simply choose the singleton set consisting of the minimal element of the \texttt{FootSet} as one partition, the other partition follows.  The \texttt{Ord}er relation over a \texttt{FootSet}, from which the minimal element is derived, is itself automatically derived by the Haskell compiler.
+In order to implement rule~\ref{rule:split-spiders} we require an implementation of the $\oplus$ and $\ominus$ operators.  These are implemented in the functions \texttt{addASpider} and \texttt{removeASpider} respectively.  In this implementation the rule we choose a specific bipartite partition of the \texttt{FootSet}.  We simply choose the singleton set consisting of the minimal element of the \texttt{FootSet} as one partition, the other partition follows.  The \texttt{Ord}er relation over a \texttt{FootSet}, from which the minimal element is derived, is itself automatically derived by the Haskell compiler.
 
 >-- | Find all spider identifiers with a particular FootSet
 >find :: FootSet -> SISet -> SISet
@@ -194,7 +194,7 @@ The following function separates order information from bounds information when 
 >                 (shaded d) 
 >                 (unorderAllSpiders (sids d))
 
-We now present a recursive algorithm to apply \texttt{separate\_order\_and\_bounds} to a \texttt{Compound} diagram.
+We now present a recursive algorithm to apply \texttt{separateOrderAndBounds} to a \texttt{Compound} diagram.
 
 >separateOrderAndBounds :: AlphaCompound -> AlphaCompound
 >separateOrderAndBounds d = 
@@ -234,7 +234,7 @@ The following implements Rule~\ref{rule:factor-lowest-spider} \textit{Factor Low
 >         (shaded d)
 >         ((sids d) `Set.difference` (sids d1))
 
-The implementation of \texttt{factor\_lowest\_spider} recursively applies \\\texttt{rule\_factor\_lowest\_spider} to the leaves of a \texttt{Compound} diagram.  The recursion terminates when we can no-longer find a factorable spider in the \texttt{Unitary} component.
+The implementation of \texttt{factorLowestSpider} recursively applies \\\texttt{ruleFactorLowestSpider} to the leaves of a \texttt{Compound} diagram.  The recursion terminates when we can no-longer find a factorable spider in the \texttt{Unitary} component.
 
 >factorLowestSpider :: AlphaCompound -> AlphaCompound
 >factorLowestSpider d = 
