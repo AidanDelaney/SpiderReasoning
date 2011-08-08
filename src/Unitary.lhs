@@ -27,7 +27,7 @@
 
 First, define an appropriate data structure for a spider diagram of order.  This follows the same structure as the previously presented Backus-Naur grammar.  This collection of data constructors and type synonyms form a domain specific language in which we may discuss \texttt{Contour}s and \texttt{ContourSet}s, rather than the underlying types provided by the programming language.
 
->type Contour = Char
+>type Contour = String
 >type ContourSet = Set Contour
 
 >data Zone = Zone { zin :: ContourSet
@@ -223,7 +223,7 @@ Temporary data type for testing \textit{introduction of a missing zone}.
 tests = []
 
 >allContours :: [Contour]
->allContours = "PQRWX"
+>allContours = ["P","Q","R","W","X"]
 >allContoursS :: Set Contour
 >allContoursS = Set.fromList allContours
 

@@ -260,10 +260,10 @@ The implementation of rule~\ref{rule:drop-spider-foot-order} \textit{drop spider
 >prop_one_rule_intro_c d1 = (((Set.size(contours d2)) == (Set.size(contours d1))+2) 
 >      && (Set.size (zones d2)) == 4*(Set.size (zones d1))) || (zones d1)==Set.empty -- if the zones are empty, then there's nothing to split
 >      where
->      d2 = ruleIntroC 'Z' (ruleIntroC 'Y' d1)
+>      d2 = ruleIntroC "Z" (ruleIntroC "Y" d1)
 
 >prop_sym_rule_intro_c :: Unitary -> Bool
->prop_sym_rule_intro_c d =  (ruleIntroC 'Z' (ruleIntroC 'Y' d))==(ruleIntroC 'Y' (ruleIntroC 'Z' d))
+>prop_sym_rule_intro_c d =  (ruleIntroC "Z" (ruleIntroC "Y" d))==(ruleIntroC "Y" (ruleIntroC "Z" d))
 
 >assertForLeaf :: (D a) -> (a -> Bool)  -> Bool
 >assertForLeaf (Leaf d) f        = f d
@@ -398,10 +398,10 @@ The implementation of rule~\ref{rule:drop-spider-foot-order} \textit{drop spider
 >      ]
 
 >genDiagram :: Compound
->genDiagram = Leaf (mkUnitary (Set.fromList "PQRWX") (Set.fromList [p, notp]) Set.empty (Set.fromList [s1, s2]))
+>genDiagram = Leaf (mkUnitary (Set.fromList ["P", "Q", "R","W","X"]) (Set.fromList [p, notp]) Set.empty (Set.fromList [s1, s2]))
 >     where
->          p = mkZone (Set.fromList "P") (Set.fromList "")
->          notp = mkZone (Set.fromList "") (Set.fromList "P")
+>          p = mkZone (Set.singleton "P") (Set.empty)
+>          notp = mkZone (Set.empty) (Set.singleton "P")
 >          h = Set.fromList [Foot (Just 1) p, Foot Nothing notp, Foot Nothing p, Foot (Just 2) notp]
 >          s1 = SI 2 h
 >          s2 = SI 1 (Set.fromList [Foot (Just 2) p])
