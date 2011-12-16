@@ -81,11 +81,19 @@ The following method is used to recursively apply reasoning rules to diagrams.  
 
 >mkCompound :: Int -> Gen Compound
 >mkCompound 0 = mkLeaf
->mkCompound depth = oneof [mkLeaf, mkBinary And depth, mkBinary Or depth, mkBinary Product depth, mkNot depth]
+>mkCompound depth = oneof [mkLeaf,
+>                          mkBinary And depth, 
+>                          mkBinary Or depth, 
+>                          mkBinary Product depth,
+>                          mkNot depth]
 
 >mkAlphaCompound :: Int -> Gen AlphaCompound
 >mkAlphaCompound 0 = mkAlphaLeaf
->mkAlphaCompound depth = oneof [mkAlphaLeaf, mkAlphaBinary And depth, mkAlphaBinary Or depth, mkAlphaBinary Product depth, mkAlphaNot depth]
+>mkAlphaCompound depth = oneof [mkAlphaLeaf, 
+>                               mkAlphaBinary And depth, 
+>                               mkAlphaBinary Or depth,
+>                               mkAlphaBinary Product depth,
+>                               mkAlphaNot depth]
 
 >instance Arbitrary Compound where
 >  arbitrary = mkCompound =<< (choose (0,4))

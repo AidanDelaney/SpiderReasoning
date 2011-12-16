@@ -4,7 +4,12 @@
 
 -*- mode: haskell; c-basic-offset: 2; tab-width: 2; indent-tabs-mode: nil -*-
 
-> module Unitary (Contour, ContourSet, Zone (zin, zout), mkZone, ZoneSet, Foot (..), FootSet, Spider (..), SI (..), SISet, AlphaSI (..), toSSet, toSISet, Unitary, Alpha, mkUnitary, mkAlpha, U (..), unitaryToAlpha, UnitaryAndZone2 (..), powersetS, listAllZones, UnitaryAndElem (..), UnitaryAndElem2 (..), allContours, allContoursS) where
+> module Unitary (Contour, ContourSet, Zone (zin, zout), mkZone, ZoneSet, 
+>                 Foot (..), FootSet, Spider (..), SI (..), SISet, AlphaSI (..), 
+>                 toSSet, toSISet, Unitary, Alpha, mkUnitary, mkAlpha, U (..), 
+>                 unitaryToAlpha, UnitaryAndZone2 (..), powersetS, listAllZones,
+>                 UnitaryAndElem (..), UnitaryAndElem2 (..), allContours, 
+>                 allContoursS) where
 
 >import qualified Data.Set as Set
 >import Data.Set (Set)
@@ -39,7 +44,7 @@ First, define an appropriate data structure for a spider diagram of order.  This
 
 >type ZoneSet = Set Zone
 
-From definition~\ref{defn:sdoo-foot}, a spider foot is an element of the set $(\Zed^+\cup\{\bullet\})\times\mathcal{Z}$.  We use \texttt{Nothing} as $\bullet$ and \texttt{Just i} as rank i.  By deriving the type class \texttt{Ord} it is the case that \texttt{Nothing}$<$\texttt{Just x} for all integers $x$.  The \texttt{Ord} typeclass does not encode the $<$ relation over feet as defined in definition~\ref{defn:sdoo-foot}.
+From definition~\ref{defn:sdoo-foot}, a spider foot is an element of the set $(\Zed^+\cup\{\bullet\})\times\mathcal{Z}$.  We use \texttt{Nothing} as $\bullet$ and \texttt{Just i} as rank i.  By deriving the type class \texttt{Ord} it is the case that \texttt{Nothing}$<$\texttt{Just} $x$ for all integers $x$.  Although syntactically similar, the \texttt{Ord} typeclass does not encode the $<$ relation over feet as defined in definition~\ref{defn:sdoo-foot}.
 
 >data Foot = Foot { rank   :: Maybe Int
 >                 , habitat:: Zone} deriving (Show, Eq, Ord)
@@ -73,7 +78,8 @@ We distinguish between a spider and an $\alpha$-spider as some of our rules requ
 >toSISet :: SSet -> SISet
 >toSISet ss = Set.map mkSIs ss
 >        where
->        mkSIs (Spider n p) = SI (Set.size (Set.filter (\x -> p == (sfeet x)) ss)) p
+>        mkSIs (Spider n p) = 
+>           SI (Set.size (Set.filter (\x -> p == (sfeet x)) ss)) p
 
 >instance (Ord a, Arbitrary a) => Arbitrary (Set a) where
 >         arbitrary = do
@@ -204,8 +210,10 @@ Temporary data type for testing \textit{introduction of a missing zone}.
 >  else
 >    elements (map Just (Set.toList (sids d)))
 
->data UnitaryAndElem  = UnitaryAndElem Unitary (Maybe SI) deriving Show
->data UnitaryAndElem2 = UnitaryAndElem2 Unitary (Maybe SI) (Maybe SI) deriving Show
+>data UnitaryAndElem  = 
+>       UnitaryAndElem Unitary (Maybe SI) deriving Show
+>data UnitaryAndElem2 = 
+>       UnitaryAndElem2 Unitary (Maybe SI) (Maybe SI) deriving Show
 
 >instance Arbitrary UnitaryAndElem where
 >  arbitrary = do

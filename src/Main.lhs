@@ -8,7 +8,7 @@
 >import Compound
 
 >import qualified Data.Set as Set
->import Data.Set (Set, fromList)
+>import Data.Set (Set, fromList, union)
 >import Data.Maybe (isJust, fromMaybe)
 
 >import Test.QuickCheck
@@ -19,6 +19,7 @@
 
 \end{comment}
 
+\subsubsection{Introduction of a Contour Label}
 We now define a function for each reasoning rule.  In the following code we define a function \texttt{ruleIntroC} which is an implementation of Rule~\ref{rule:intro-contour} \textit{Introduction of a Contour Label}.  We can observe from its type signature that it takes a \texttt{Contour} label and a \texttt{Unitary} diagram and returns a new \texttt{Unitary} diagram.  The \textit{Rule of replacement}, of which we need no implementation, allows us to substitute the original \texttt{Unitary} diagram with the new syntactically equivalent \texttt{Unitary} diagram.  The functions \texttt{flattenSet}, \texttt{splitZone}, \texttt{splitZoneset}, \texttt{splitFoot} and \texttt{splitSpider} factor out important operations for the purpose of readability.
 
 >flattenSet :: (Ord a) => Set (Set a) -> Set a
@@ -57,7 +58,7 @@ The implementation of rule~\ref{rule:intro-contour} \textit{introduction of a co
 >            (splitZoneset l (shaded d))
 >            (Set.map (splitSpider l) (sids d)) 
 
-The function \texttt{ruleIntroC} is an implementation of rule~\ref{rule:intro-contour}.  We now define a function to apply the \texttt{ruleIntroC} to the leaves of a \texttt{Compound} diagram for each \texttt{Contour} in a list of \texttt{Contour}s.  This allows us to algorithmically add all contours in $\mathcal{C}$ to a \texttt{Compound} diagram.
+The function \texttt{ruleIntroC} is an implementation of rule~\ref{rule:intro-contour}.  We now define a function to apply the \texttt{ruleIntroC} to the leaves of a \texttt{Compound} diagram for each \texttt{Contour} in a list of \texttt{Contour}s.  This allows us to add all contours in $\mathcal{C}$ to a \texttt{Compound} diagram.  In our implementation \texttt{allContoursS} is a \texttt{Set} of \texttt{Contour}s and is a representation of $\mathcal{C}$.
 
 >introC :: [Contour] -> Compound -> Compound
 >introC [] c = c
@@ -70,6 +71,7 @@ The function \texttt{ruleIntroC} is an implementation of rule~\ref{rule:intro-co
 >                                       `Set.difference` (contours d)))) 
 >                 d)
 
+\subsubsection{Introduction of a Missing Zone}
 Rule~\ref{rule:introduce-missing-zone} \textit{Introduction of a Missing Zone} is implemented in \texttt{ruleIntroMz}.  We assume the existence of a function \texttt{powersetS :: Ord a => Set a -> Set (Set a)} which computes the powerset of a \texttt{Set a}.  The full implementation of all helper functions can be found in appendix~\ref{appendix:code}.
 
 >ruleIntroMz :: Zone -> Unitary -> Unitary
@@ -79,7 +81,7 @@ Rule~\ref{rule:introduce-missing-zone} \textit{Introduction of a Missing Zone} i
 >            (Set.insert z (shaded d))
 >            (sids d)
 
-We provide an implementation of \texttt{introMz} which simply applies \texttt{ruleIntroMz} for each element in the set of all zones.
+We provide an implementation of \texttt{introMz} which applies \texttt{ruleIntroMz} to each element in the set of all zones.
 
 >introMz :: Compound -> Compound
 >introMz c = fmap (\d' -> Set.fold ruleIntroMz d' (allZones d')) c
@@ -87,7 +89,9 @@ We provide an implementation of \texttt{introMz} which simply applies \texttt{ru
 >  allZones d' = (Set.map (listAllZones (contours d')) 
 >                            $ powersetS (contours d'))
 
-In order to implement rule~\ref{rule:split-spiders} we require an implementation of the $\oplus$ and $\ominus$ operators.  These are implemented in the functions \texttt{addASpider} and \texttt{removeASpider} respectively.  In this implementation the rule we choose a specific bipartite partition of the \texttt{FootSet}.  We simply choose the singleton set consisting of the minimal element of the \texttt{FootSet} as one partition, the other partition follows.  The \texttt{Ord}er relation over a \texttt{FootSet}, from which the minimal element is derived, is itself automatically derived by the Haskell compiler.
+\subsubsection{Split Spiders}
+In order to implement rule~\ref{rule:split-spiders} we require an implementation of the $\oplus$ and $\ominus$ operators.  These are implemented in the functions \texttt{addASpider} and \texttt{removeASpider} respectively.  In this implementation of the rule we choose a specific two-way partition of the \texttt{FootSet}.  We simply choose the singleton set consisting of the minimal element of the \texttt{FootSet} as one partition, the other partition follows.  
+%The \texttt{Ord}er relation over a \texttt{FootSet}, from which the minimal element is derived, is itself automatically derived by the Haskell compiler.
 
 >-- | Find all spider identifiers with a particular FootSet
 >find :: FootSet -> SISet -> SISet
@@ -127,7 +131,7 @@ In order to implement rule~\ref{rule:split-spiders} we require an implementation
 >       stripped_sis  = removeASpider p d
 >       (p1,p2) = Set.partition ((Set.findMin p)==) p
 
-Again, we provide a generalisation of the split spiders rule, called \texttt{splitSpiders}, which recursively applies \texttt{ruleSplitSpider} to the \texttt{Unitary} components of a \texttt{Compound} diagram.  The recursion terminates when \texttt{findSplittableSpider} can no-longer find a spider in a \texttt{FootSet} with two or more feet.
+Again, we provide a generalisation of the split spiders rule, called \texttt{splitSpiders}, which recursively applies \texttt{ruleSplitSpider} to the \texttt{Unitary} components of a \texttt{Compound} diagram.  The recursion terminates when \texttt{findSplittableSpider} can no longer find a spider in a \texttt{FootSet} with two or more feet.
 
 >-- | Find a spider with two or more feet
 >findSplitableSpider :: SISet -> Maybe FootSet
@@ -140,25 +144,26 @@ Again, we provide a generalisation of the split spiders rule, called \texttt{spl
 >          (Set.filter (\x-> (Set.size x) >=2) (Set.map feet sis))
 
 >splitSpiders :: Compound -> Compound
->splitSpiders d = 
+>splitSpiders diagram = 
 >  applyToLeafIf (\(Leaf d') -> 
 >                    isJust (findSplitableSpider (sids d')))
 >                (\(Leaf d') -> 
 >                    let (Just p') = findSplitableSpider (sids d') in 
 >                    ruleSplitSpiders p' d')
->                d
+>                diagram
 
-The implementation of rule~\ref{rule:conjoin-stuff} \textit{Separate Order and Bounds} follows.
+\subsubsection{Separate Rank and Bounds}
+The implementation of rule~\ref{rule:conjoin-stuff} \textit{Separate Rank and Bounds} follows.
 
->-- | Get the subset of @\alpha@-spiders that are ordered.
->extractOrderedAlphaSpiders :: Set AlphaSI -> Set AlphaSI
->extractOrderedAlphaSpiders sis = 
+>-- | Get the subset of @$\alpha$@-spiders that are ordered.
+>extractRankedAlphaSpiders :: Set AlphaSI -> Set AlphaSI
+>extractRankedAlphaSpiders sis = 
 >  Set.filter (isJust . rank . alphaFoot) sis
 
 >-- | Remove integer ranks from all spiders, making sure to 
 >-- correctly update spider identifiers
->unorderAllSpiders :: Set AlphaSI -> Set AlphaSI
->unorderAllSpiders sis = 
+>unrankAllSpiders :: Set AlphaSI -> Set AlphaSI
+>unrankAllSpiders sis = 
 >  Set.map (\s-> AlphaSI 
 >                  (countEm (alphaFoot s)) 
 >                  (Foot Nothing (habitat $ alphaFoot s))) 
@@ -169,40 +174,41 @@ The implementation of rule~\ref{rule:conjoin-stuff} \textit{Separate Order and B
 >                    (Set.map (alphaCount) 
 >                       (Set.filter (\s -> (alphaFoot s) == f) sis))
 
-Given a \texttt{Unitary} diagram there are two conditions under which it cannot be separated into order information and bounds information.  These are if 
+Given a \texttt{Unitary} diagram there are two conditions under which it cannot be separated into rank information and bounds information.  These are that
 \begin{itemize}
-\item it contains only ordered spiders and no shading, or
-\item it contains no ordered spiders.
+\item it contains only ranked spiders and no shading, or
+\item it contains no ranked spiders.
 \end{itemize}
-The following function separates order information from bounds information when neither of the above conditions are satisfied.
+The following function separates order information from bounds information when neither of the above conditions is satisfied.
 
->ruleSeparateOrderAndBounds :: Alpha -> AlphaCompound
+>ruleSeparateRankAndBounds :: Alpha -> AlphaCompound
 >-- if we have a diagram containing only order information, 
 >-- or only bound information, return it as a Leaf
->ruleSeparateOrderAndBounds d = 
->  if (extractOrderedAlphaSpiders (sids d)== (sids d) && (shaded d)==Set.empty)
->     ||  (extractOrderedAlphaSpiders (sids d)== Set.empty) 
+>ruleSeparateRankAndBounds d = 
+>  if (extractRankedAlphaSpiders (sids d)== (sids d) && (shaded d)==Set.empty)
+>     ||  (extractRankedAlphaSpiders (sids d)== Set.empty) 
 >  then Leaf d
 >  else And (Leaf d1) (Leaf d2)
 >    where
 >    d1 = mkAlpha (contours d) 
 >                 (zones d) 
 >                 Set.empty 
->                 (extractOrderedAlphaSpiders (sids d))
+>                 (extractRankedAlphaSpiders (sids d))
 >    d2 = mkAlpha (contours d) 
 >                 (zones d) 
 >                 (shaded d) 
->                 (unorderAllSpiders (sids d))
+>                 (unrankAllSpiders (sids d))
 
-We now present a recursive algorithm to apply \texttt{separateOrderAndBounds} to a \texttt{Compound} diagram.
+We now present a recursive algorithm to apply \texttt{ruleSeparateRankAndBounds} to a \texttt{Compound} diagram.
 
->separateOrderAndBounds :: AlphaCompound -> AlphaCompound
->separateOrderAndBounds d = 
->  applyToLeafIf (\(Leaf d') -> not ((Leaf d') == (ruleSeparateOrderAndBounds d'))) 
->                (\(Leaf d') -> ruleSeparateOrderAndBounds d')
+>separateRankAndBounds :: AlphaCompound -> AlphaCompound
+>separateRankAndBounds d = 
+>  applyToLeafIf (\(Leaf d') -> not ((Leaf d') == (ruleSeparateRankAndBounds d'))) 
+>                (\(Leaf d') -> ruleSeparateRankAndBounds d')
 >                d
 
-The following implements Rule~\ref{rule:factor-lowest-spider} \textit{Factor Lowest Spider}.
+\subsubsection{Factor Lowest Spider}
+The following implements Rule~\ref{rule:factor-lowest-spider} \textit{Factor Lowest Spider}.  The implementation uses the helper function \texttt{findLowestFactorable} which returns the rank of factorable spiders.
 
 >-- | If the diagram contains two or more different 
 >-- ranks of spider foot, return the lower rank.
@@ -215,6 +221,8 @@ The following implements Rule~\ref{rule:factor-lowest-spider} \textit{Factor Low
 >  where
 >  ranks = 
 >    Set.toList (Set.filter (\x -> Nothing/=x) (Set.map (rank . alphaFoot) sis))
+
+The implentation factors a unitary $\alpha$-diagram into a compound alpha diagram.  Where the unitary diagram contains no factorable spiders then it \texttt{ruleFactorLowestSpider} outputs it as the leaf of a compound diagram.
 
 >ruleFactorLowestSpider :: Alpha -> AlphaCompound
 >ruleFactorLowestSpider d = 
@@ -242,28 +250,33 @@ The implementation of \texttt{factorLowestSpider} recursively applies \\\texttt{
 >                (\(Leaf d') -> ruleFactorLowestSpider d')
 >                d
 
-The implementation of rule~\ref{rule:drop-spider-foot-order} \textit{drop spider foot order} is straightforward in both the \texttt{Unitary} and \texttt{Compound} case.
+\subsubsection{Drop Spider Foot Rank}
+The implementation of rule~\ref{rule:drop-spider-foot-order} \textit{drop spider foot rank} is straightforward in both the \texttt{Unitary} and \texttt{Compound} case.
 
->ruleDropSpiderFootOrder :: Alpha -> Alpha
->ruleDropSpiderFootOrder d = 
+>ruleDropSpiderFootRank :: Alpha -> Alpha
+>ruleDropSpiderFootRank d = 
 >  mkAlpha (contours d) 
 >          (zones d) 
 >          (shaded d) 
->          (unorderAllSpiders $ sids d)
+>          (unrankAllSpiders $ sids d)
 
->dropSpiderFootOrder :: AlphaCompound -> AlphaCompound
->dropSpiderFootOrder c = fmap ruleDropSpiderFootOrder c
+The value of deriving the \texttt{Functor} typeclass for \texttt{AlphaCompound} can be seen in the succinctness of the implementation of \texttt{dropSpiderFootRank}.
+
+>dropSpiderFootRank :: AlphaCompound -> AlphaCompound
+>dropSpiderFootRank c = fmap ruleDropSpiderFootRank c
 
 \begin{comment}
 
 >prop_one_rule_intro_c :: Unitary -> Bool
->prop_one_rule_intro_c d1 = (((Set.size(contours d2)) == (Set.size(contours d1))+2) 
+>prop_one_rule_intro_c d1 = 
+>      (((Set.size(contours d2)) == (Set.size(contours d1))+2) 
 >      && (Set.size (zones d2)) == 4*(Set.size (zones d1))) || (zones d1)==Set.empty -- if the zones are empty, then there's nothing to split
 >      where
 >      d2 = ruleIntroC "Z" (ruleIntroC "Y" d1)
 
 >prop_sym_rule_intro_c :: Unitary -> Bool
->prop_sym_rule_intro_c d =  (ruleIntroC "Z" (ruleIntroC "Y" d))==(ruleIntroC "Y" (ruleIntroC "Z" d))
+>prop_sym_rule_intro_c d =  
+>    (ruleIntroC "Z" (ruleIntroC "Y" d))==(ruleIntroC "Y" (ruleIntroC "Z" d))
 
 >assertForLeaf :: (D a) -> (a -> Bool)  -> Bool
 >assertForLeaf (Leaf d) f        = f d
@@ -274,7 +287,8 @@ The implementation of rule~\ref{rule:drop-spider-foot-order} \textit{drop spider
 
 >prop_intro_c :: Compound -> Bool
 >-- This list is the same as the set that Arbitrary Unitarys can draw from
->prop_intro_c d = assertForLeaf (introC allContours d) (\d' -> (Set.fromList allContours) == contours d')
+>prop_intro_c d = 
+>     assertForLeaf (introC allContours d) (\d' -> (Set.fromList allContours) == contours d')
 
 >prop_sym_rule_intro_mz :: UnitaryAndZone2 -> Bool
 >prop_sym_rule_intro_mz (UnitaryAndZone2 d z1 z2) =
@@ -308,7 +322,8 @@ The implementation of rule~\ref{rule:drop-spider-foot-order} \textit{drop spider
 >prop_sym_removeASpider (UnitaryAndElem2 _ Nothing _) = True
 >prop_sym_removeASpider (UnitaryAndElem2 _ _ Nothing) = True
 >prop_sym_removeASpider (UnitaryAndElem2 d (Just s1) (Just s2)) =
->  (removeASpider p2 (removeASpider p1 d)) == (removeASpider p1 (removeASpider p2 d))
+>  (removeASpider p2 (removeASpider p1 d)) 
+>   == (removeASpider p1 (removeASpider p2 d))
 >           where
 >--           allZones = Set.map (listAllZones (contours d)) (powersetS (contours d))
 >           p1 = feet s1
@@ -344,9 +359,9 @@ The implementation of rule~\ref{rule:drop-spider-foot-order} \textit{drop spider
 
 >getLeaves :: Ord a => D a -> Set a -> Set a
 >getLeaves (Leaf d)        ls = Set.insert d ls
->getLeaves (And d1 d2)     ls = (getLeaves d1 ls) `Set.union` (getLeaves d2 ls)
->getLeaves (Or d1 d2)      ls = (getLeaves d1 ls) `Set.union` (getLeaves d2 ls)
->getLeaves (Product d1 d2) ls = (getLeaves d1 ls) `Set.union` (getLeaves d2 ls)
+>getLeaves (And d1 d2)     ls = (getLeaves d1 ls) `union` (getLeaves d2 ls)
+>getLeaves (Or d1 d2)      ls = (getLeaves d1 ls) `union` (getLeaves d2 ls)
+>getLeaves (Product d1 d2) ls = (getLeaves d1 ls) `union` (getLeaves d2 ls)
 >getLeaves (Not d)         ls = (getLeaves d ls)
 
 >prop_findSplitableSpider :: Compound -> Bool
@@ -363,60 +378,94 @@ The implementation of rule~\ref{rule:drop-spider-foot-order} \textit{drop spider
 >prop_idem_extract_unordered_spiders d (TinyInt n1) (TinyInt n2) = sis == sis'
 >            where
 >            -- The 0^th application of iterate f x is x, hence the +1
->            sis  = (iterate (extractOrderedAlphaSpiders ) (sids d) )!! n1
->            sis' = (iterate (extractOrderedAlphaSpiders ) (sids d) )!! n2 
+>            sis  = (iterate (extractRankedAlphaSpiders ) (sids d) )!! n1
+>            sis' = (iterate (extractRankedAlphaSpiders ) (sids d) )!! n2 
 
->prop_idem_unorderAllSpiders :: Alpha -> TinyInt -> TinyInt -> Bool
->prop_idem_unorderAllSpiders d (TinyInt n1) (TinyInt n2) = sis == sis'
+>prop_idem_unrankAllSpiders :: Alpha -> TinyInt -> TinyInt -> Bool
+>prop_idem_unrankAllSpiders d (TinyInt n1) (TinyInt n2) = sis == sis'
 >            where
->            sis  = (iterate (unorderAllSpiders ) (sids d) )!! n1
->            sis' = (iterate (unorderAllSpiders ) (sids d) )!! n2 
+>            sis  = (iterate (unrankAllSpiders ) (sids d) )!! n1
+>            sis' = (iterate (unrankAllSpiders ) (sids d) )!! n2 
 
->prop_unorderAllSpiders :: Alpha -> Bool
->prop_unorderAllSpiders d = (Set.empty == (Set.filter (\si -> Nothing /= (rank $ alphaFoot si)) sis'))
+>prop_unrankAllSpiders :: Alpha -> Bool
+>prop_unrankAllSpiders d = 
+>  (Set.empty == (Set.filter (\si -> Nothing /= (rank $ alphaFoot si)) sis'))
 >  where
->  sis' = unorderAllSpiders (sids d)
+>  sis' = unrankAllSpiders (sids d)
 
 >tests = [
->         testGroup "Unitary Rules" [
->            testProperty "Invariants for Rule Intro C"  prop_one_rule_intro_c
->          , testProperty "Symmetry for Rule Intro C"   prop_sym_rule_intro_c
->          , testProperty "Recursive application of Rule Intro C" prop_intro_c
->          , testProperty "Symmetry for Rule MZ"        prop_sym_rule_intro_mz
->          , testProperty "Recursive application of Rule MZ"      prop_introMZToVenn
->         ],
->         testGroup "Compound Rules" [
->            testProperty "Remove a spider for Rule split spiders" prop_removeASpider
->          , testProperty "Add a spider for Rule split spiders"    prop_addASpider
->          , testProperty "Symmetry of Remove a spider"            prop_sym_removeASpider
->          , testProperty "Symmetry of Add a spider"               prop_sym_addASpider
->          , testProperty "Add/Remove a spider identity"           prop_id_ar_a_spider
->          , testProperty "Rule Split Spiders"                     prop_ruleSplitSpiders
->          , testProperty "Find splittable spider "                prop_findSplitableSpider
->          , testProperty "Unorder spiders in an Alpha"            prop_unorderAllSpiders
->         ]
->      ]
+>  testGroup "Unitary Rules" [
+>    testProperty 
+>        "Invariants for Rule Intro C"  
+>        prop_one_rule_intro_c
+>    , testProperty 
+>         "Symmetry for Rule Intro C"
+>         prop_sym_rule_intro_c
+>    , testProperty 
+>         "Recursive application of Rule Intro C" 
+>         prop_intro_c
+>    , testProperty 
+>         "Symmetry for Rule MZ"
+>         prop_sym_rule_intro_mz
+>    , testProperty 
+>         "Recursive application of Rule MZ"
+>         prop_introMZToVenn
+>    ],
+>  testGroup "Compound Rules" [
+>    testProperty 
+>         "Remove a spider for Rule split spiders"
+>         prop_removeASpider
+>    , testProperty 
+>         "Add a spider for Rule split spiders"
+>         prop_addASpider
+>    , testProperty
+>         "Symmetry of Remove a spider"
+>         prop_sym_removeASpider
+>    , testProperty
+>         "Symmetry of Add a spider"
+>         prop_sym_addASpider
+>    , testProperty 
+>         "Add/Remove a spider identity"
+>         prop_id_ar_a_spider
+>    , testProperty 
+>         "Rule Split Spiders"
+>         prop_ruleSplitSpiders
+>    , testProperty 
+>         "Find splittable spider "
+>         prop_findSplitableSpider
+>    , testProperty
+>         "Unorder spiders in an Alpha"
+>         prop_unrankAllSpiders
+>    ]
+>  ]
 
 >genDiagram :: Compound
->genDiagram = Leaf (mkUnitary (Set.fromList ["P", "Q", "R","W","X"]) (Set.fromList [p, notp]) Set.empty (Set.fromList [s1, s2]))
+>genDiagram = Leaf (mkUnitary (Set.fromList ["P", "Q", "R","W","X"]) 
+>                  (Set.fromList [p, notp]) Set.empty (Set.fromList [s1, s2]))
 >     where
 >          p = mkZone (Set.singleton "P") (Set.empty)
 >          notp = mkZone (Set.empty) (Set.singleton "P")
->          h = Set.fromList [Foot (Just 1) p, Foot Nothing notp, Foot Nothing p, Foot (Just 2) notp]
+>          h = Set.fromList [Foot (Just 1) p, 
+>                            Foot Nothing notp,
+>                            Foot Nothing p,
+>                            Foot (Just 2) notp]
 >          s1 = SI 2 h
 >          s2 = SI 1 (Set.fromList [Foot (Just 2) p])
 
 \end{comment}
 
-Our top-level driver code is now straightforward.  We assume the existence of functions \texttt{genDiagram :: Compound} and \texttt{allContours :: [Contour]} where \texttt{genDiagram} returns an arbitrary \texttt{Compound} diagram and \texttt{allContours} is the implementation of $\mathcal{C}$.  The variable names in the code are in one-to-one correspondence with the algorithm steps presented in figure~\ref{fig:diagram-normalisation-process}, for example, \texttt{dAlpha} corresponds to $D_{\alpha}$.
+Our top-level driver code is now straightforward.
+
+\subsubsection{Mainline}
+We assume the existence of functions \texttt{genDiagram :: Compound} and \texttt{allContours :: [Contour]} where \texttt{genDiagram} returns an arbitrary \texttt{Compound} diagram and \texttt{allContours} is the list representation of \texttt{allContoursS} i.e. $\mathcal{C}$.  The variable names in the code are in one-to-one correspondence with the algorithm steps presented in figure~\ref{fig:diagram-normalisation-process}, for example, \texttt{dAlpha} corresponds to $D_{\alpha}$.
 
 >main :: IO()
->main = do  defaultMain tests
+>main = do  
 >           print dBullet
 >     where
 >     dC = introC allContours genDiagram
 >     dZ = introMz dC 
 >     dAlpha = fmap unitaryToAlpha (splitSpiders dZ)
->     dBullet = dropSpiderFootOrder 
+>     dBullet = dropSpiderFootRank 
 >             $ factorLowestSpider 
->             $ separateOrderAndBounds dAlpha
+>             $ separateRankAndBounds dAlpha
