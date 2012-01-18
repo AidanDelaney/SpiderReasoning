@@ -20,43 +20,43 @@
 \end{comment}
 
 \subsubsection{Introduction of a Contour Label}
-We now define a function for each reasoning rule.  In the following code we define a function \texttt{ruleIntroC} which is an implementation of Rule~\ref{rule:intro-contour} \textit{Introduction of a Contour Label}.  We can observe from its type signature that it takes a \texttt{Contour} label and a \texttt{Unitary} diagram and returns a new \texttt{Unitary} diagram.  The \textit{Rule of replacement}, of which we need no implementation, allows us to substitute the original \texttt{Unitary} diagram with the new syntactically equivalent \texttt{Unitary} diagram.  The functions \texttt{flattenSet}, \texttt{splitZone}, \texttt{splitZoneset}, \texttt{splitFoot} and \texttt{splitSpider} factor out important operations for the purpose of readability.
+We now define a function for each reasoning rule.  In the following code we define a function \texttt{ruleIntroC} which is an implementation of Rule~\ref{rule:intro-contour} \textit{Introduction of a Contour Label}.  We can observe from its type signature that it takes a \texttt{Contour} label and a \texttt{Unitary} diagram and returns a new \texttt{Unitary} diagram.  The \textit{Rule of replacement}, of which we need no implementation, allows us to substitute the original \texttt{Unitary} diagram with the new syntactically equivalent \texttt{Unitary} diagram.  The functions \texttt{flattenSet}, \texttt{splitZone}, \texttt{splitZoneset}, \texttt{splitFoot} and \texttt{bifurateSpider} factor out important operations for the purpose of readability.
 
 >flattenSet :: (Ord a) => Set (Set a) -> Set a
 >flattenSet = Set.fold Set.union Set.empty
 
-Splits a Zone in two by introducing a new Contour label.
+The \texttt{splitZone} function splits a Zone in two by introducing a new Contour label.
 
 >splitZone :: Contour -> Zone -> ZoneSet
 >splitZone l z = Set.fromList [ z { zin  = Set.insert l (zin z) }
 >                            , z { zout = Set.insert l (zout z) } ]
 
-Splits each Zone in a ZoneSet in two.
+Similarly \texttt{splitZoneset} splits each Zone in a ZoneSet in two.
 
 >splitZoneset :: Contour -> ZoneSet -> ZoneSet
 >splitZoneset l zs | Set.null zs = splitZone l (mkZone Set.empty Set.empty)
 >                  | otherwise   = flattenSet (Set.map (splitZone l) zs)
 
-If the habitat of a spider foot is expanded by introducing a contour label, then add the new zones to the spider habitat.
+If the habitat of a spider foot is expanded by introducing a contour label then we need to add the new zones to the spider habitat:
 
 >splitFoot :: Contour -> Foot -> FootSet
 >splitFoot l f = Set.map (Foot (rank f)) (splitZone l (habitat f))
 
-Expand all feet in each of the identified spiders into the expanded habitat.
+In \texttt{bifurateSpider} we extend all feet in each of the identified spiders into the new zones created by introducing a contour into a diagram.
 
->splitSpider :: Contour -> SI -> SI
->splitSpider l si = SI (count si) fs
+>bifurateSpider:: Contour -> SI -> SI
+>bifurateSpider l si = SI (count si) fs
 >  where
 >  fs = flattenSet (Set.map (splitFoot l) (feet si))
 
-The implementation of rule~\ref{rule:intro-contour} \textit{introduction of a contour label} is now straightforward.
+The implementation of rule~\ref{rule:intro-contour} \textit{introduction of a contour label} is now straightforward:
 
 >ruleIntroC :: Contour -> Unitary -> Unitary
 >ruleIntroC l d = 
 >  mkUnitary (Set.insert l (contours d))
 >            (splitZoneset l (zones d))
 >            (splitZoneset l (shaded d))
->            (Set.map (splitSpider l) (sids d)) 
+>            (Set.map (bifurateSpider l) (sids d)) 
 
 The function \texttt{ruleIntroC} is an implementation of rule~\ref{rule:intro-contour}.  We now define a function to apply the \texttt{ruleIntroC} to the leaves of a \texttt{Compound} diagram for each \texttt{Contour} in a list of \texttt{Contour}s.  This allows us to add all contours in $\mathcal{C}$ to a \texttt{Compound} diagram.  In our implementation \texttt{allContoursS} is a \texttt{Set} of \texttt{Contour}s and is a representation of $\mathcal{C}$.
 
@@ -90,7 +90,7 @@ We provide an implementation of \texttt{introMz} which applies \texttt{ruleIntro
 >                            $ powersetS (contours d'))
 
 \subsubsection{Split Spiders}
-In order to implement rule~\ref{rule:split-spiders} we require an implementation of the $\oplus$ and $\ominus$ operators.  These are implemented in the functions \texttt{addASpider} and \texttt{removeASpider} respectively.  In this implementation of the rule we choose a specific two-way partition of the \texttt{FootSet}.  We simply choose the singleton set consisting of the minimal element of the \texttt{FootSet} as one partition, the other partition follows.  
+In order to implement rule~\ref{rule:split-spiders} we require an implementation of the $\oplus$ and $\ominus$ operators.  These are implemented in the functions \texttt{addASpider} and \texttt{removeASpider} respectively.  In this implementation of the rule we choose a specific two-way partition of the \texttt{FootSet}.  We simply choose the singleton set consisting of the minimal element of the \texttt{FootSet} as one set in the partition, the other set in the partition follows.  
 %The \texttt{Ord}er relation over a \texttt{FootSet}, from which the minimal element is derived, is itself automatically derived by the Haskell compiler.
 
 >-- | Find all spider identifiers with a particular FootSet
@@ -203,9 +203,10 @@ We now present a recursive algorithm to apply \texttt{ruleSeparateRankAndBounds}
 
 >separateRankAndBounds :: AlphaCompound -> AlphaCompound
 >separateRankAndBounds d = 
->  applyToLeafIf (\(Leaf d') -> not ((Leaf d') == (ruleSeparateRankAndBounds d'))) 
->                (\(Leaf d') -> ruleSeparateRankAndBounds d')
->                d
+>  applyToLeafIf 
+>    (\(Leaf d') -> not ((Leaf d') == (ruleSeparateRankAndBounds d'))) 
+>    (\(Leaf d') -> ruleSeparateRankAndBounds d')
+>    d
 
 \subsubsection{Factor Lowest Spider}
 The following implements Rule~\ref{rule:factor-lowest-spider} \textit{Factor Lowest Spider}.  The implementation uses the helper function \texttt{findLowestFactorable} which returns the rank of factorable spiders.
@@ -220,7 +221,9 @@ The following implements Rule~\ref{rule:factor-lowest-spider} \textit{Factor Low
 >    _ -> minimum ranks
 >  where
 >  ranks = 
->    Set.toList (Set.filter (\x -> Nothing/=x) (Set.map (rank . alphaFoot) sis))
+>    Set.toList (Set.filter 
+>                 (\x -> Nothing/=x) 
+>                 (Set.map (rank . alphaFoot) sis))
 
 The implentation factors a unitary $\alpha$-diagram into a compound alpha diagram.  Where the unitary diagram contains no factorable spiders then it \texttt{ruleFactorLowestSpider} outputs it as the leaf of a compound diagram.
 
@@ -454,7 +457,7 @@ The value of deriving the \texttt{Functor} typeclass for \texttt{AlphaCompound} 
 
 \end{comment}
 
-Our top-level driver code is now straightforward.
+In the next subsection we introduce the entry point to our program, called \texttt{main}.  This mainline is responsible for correctly sequencing the application of our reasoning rules to an arbitrary spider diagram of order.  It outputs the resulting spider diagram of order in normal form to the standard output.
 
 \subsubsection{Mainline}
 We assume the existence of functions \texttt{genDiagram :: Compound} and \texttt{allContours :: [Contour]} where \texttt{genDiagram} returns an arbitrary \texttt{Compound} diagram and \texttt{allContours} is the list representation of \texttt{allContoursS} i.e. $\mathcal{C}$.  The variable names in the code are in one-to-one correspondence with the algorithm steps presented in figure~\ref{fig:diagram-normalisation-process}, for example, \texttt{dAlpha} corresponds to $D_{\alpha}$.
