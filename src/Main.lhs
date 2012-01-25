@@ -469,8 +469,8 @@ In the next subsection we introduce the entry point to our program, called \text
 We assume the existence of functions \texttt{genDiagram :: Compound} and \texttt{allContours :: [Contour]} where \texttt{genDiagram} returns an arbitrary \texttt{Compound} diagram and \texttt{allContours} is the list representation of \texttt{allContoursS} i.e. $\mathcal{C}$.  The variable names in the code are in one-to-one correspondence with the algorithm steps presented in figure~\ref{fig:diagram-normalisation-process}, for example, \texttt{dAlpha} corresponds to $D_{\alpha}$.
 
 >main :: IO()
->main = do  
->           print dBullet
+>main = 
+>  print dBullet
 >     where
 >     dC = introC allContours genDiagram
 >     dZ = introMz dC 
