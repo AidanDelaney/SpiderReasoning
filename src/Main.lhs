@@ -52,6 +52,7 @@ In \texttt{bifurateSpider} we extend all feet in each of the identified spiders 
 The implementation of rule~\ref{rule:intro-contour} \textit{introduction of a contour label} is now straightforward:
 
 >ruleIntroC :: Contour -> Unitary -> Unitary
+>ruleIntroC l Bot = Bot
 >ruleIntroC l d = 
 >  mkUnitary (Set.insert l (contours d))
 >            (splitZoneset l (zones d))
@@ -66,7 +67,7 @@ The function \texttt{ruleIntroC} is an implementation of rule~\ref{rule:intro-co
 >  applyToLeafIf 
 >                 (\(Leaf d) -> (allContoursS /= (contours d))) f c
 >  where
->  f (Leaf d) = Leaf (ruleIntroC 
+>  f (Leaf d)   = Leaf (ruleIntroC 
 >                 (head (Set.toList (allContoursS 
 >                                       `Set.difference` (contours d)))) 
 >                 d)
@@ -75,6 +76,7 @@ The function \texttt{ruleIntroC} is an implementation of rule~\ref{rule:intro-co
 Rule~\ref{rule:introduce-missing-zone} \textit{Introduction of a Missing Zone} is implemented in \texttt{ruleIntroMz}.  We assume the existence of a function \texttt{powersetS :: Ord a => Set a -> Set (Set a)} which computes the powerset of a \texttt{Set a}.  The full implementation of all helper functions can be found in appendix~\ref{appendix:code}.
 
 >ruleIntroMz :: Zone -> Unitary -> Unitary
+>ruleIntroMz z Bot = Bot
 >ruleIntroMz z d = 
 >  mkUnitary (contours d)
 >            (Set.insert z (zones d))
@@ -124,7 +126,8 @@ In order to implement rule~\ref{rule:split-spiders} we require an implementation
 >             sis = toSISet (ss `Set.union` (Set.singleton (Spider n p)))
 
 >ruleSplitSpiders :: FootSet -> Unitary -> Compound
->ruleSplitSpiders p d = Or 
+>ruleSplitSpiders p Bot = (Leaf Bot)
+>ruleSplitSpiders p d   = Or 
 >          (Leaf (addASpider p1 stripped_sis)) 
 >          (Leaf (addASpider p2 stripped_sis))
 >       where
@@ -182,6 +185,7 @@ Given a \texttt{Unitary} diagram there are two conditions under which it cannot 
 The following function separates order information from bounds information when neither of the above conditions is satisfied.
 
 >ruleSeparateRankAndBounds :: Alpha -> AlphaCompound
+>ruleSeparateRankAndBounds Bot = (Leaf Bot)
 >-- if we have a diagram containing only order information, 
 >-- or only bound information, return it as a Leaf
 >ruleSeparateRankAndBounds d = 
@@ -228,6 +232,7 @@ The following implements Rule~\ref{rule:factor-lowest-spider} \textit{Factor Low
 The implentation factors a unitary $\alpha$-diagram into a compound alpha diagram.  Where the unitary diagram contains no factorable spiders then it \texttt{ruleFactorLowestSpider} outputs it as the leaf of a compound diagram.
 
 >ruleFactorLowestSpider :: Alpha -> AlphaCompound
+>ruleFactorLowestSpider Bot = (Leaf Bot)
 >ruleFactorLowestSpider d = 
 >  case lowest of
 >    Nothing -> Leaf d
@@ -257,6 +262,7 @@ The implementation of \texttt{factorLowestSpider} recursively applies \\\texttt{
 The implementation of rule~\ref{rule:drop-spider-foot-order} \textit{drop spider foot rank} is straightforward in both the \texttt{Unitary} and \texttt{Compound} case.
 
 >ruleDropSpiderFootRank :: Alpha -> Alpha
+>ruleDropSpiderFootRank Bot = Bot
 >ruleDropSpiderFootRank d = 
 >  mkAlpha (contours d) 
 >          (zones d) 

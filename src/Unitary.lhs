@@ -6,7 +6,7 @@
 
 > module Unitary (Contour, ContourSet, Zone (zin, zout), mkZone, ZoneSet, 
 >                 Foot (..), FootSet, Spider (..), SI (..), SISet, AlphaSI (..), 
->                 toSSet, toSISet, Unitary, Alpha, mkUnitary, mkAlpha, U (..), 
+>                 toSSet, toSISet, Unitary, Alpha, mkUnitary, mkAlpha, U (..),
 >                 unitaryToAlpha, UnitaryAndZone2 (..), powersetS, listAllZones,
 >                 UnitaryAndElem (..), UnitaryAndElem2 (..), allContours, 
 >                 allContoursS) where
@@ -93,7 +93,8 @@ We define both unitary diagrams and unitary $\alpha$-diagrams.
 >data U a = U { contours :: Set Contour
 >  , zones    :: Set Zone
 >  , shaded   :: Set Zone
->  , sids     :: Set a} deriving (Show, Eq, Ord)
+>  , sids     :: Set a}
+>    | Bot  deriving (Show, Eq, Ord)
 
 >type Unitary = U SI
 >mkUnitary :: Set Contour -> Set Zone -> Set Zone -> Set SI -> Unitary
