@@ -1,6 +1,6 @@
 \begin{comment}
 
->{-# LANGUAGE TypeSynonymInstances, DeriveFunctor #-} 
+>{-# LANGUAGE TypeSynonymInstances, DeriveFunctor, FlexibleInstances #-} 
 
 -*- mode: haskell; c-basic-offset: 2; tab-width: 2; indent-tabs-mode: nil -*-
 
